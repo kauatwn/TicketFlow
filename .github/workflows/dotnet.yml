@@ -64,7 +64,7 @@ jobs:
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore TicketFlow.slnx
 
       - name: Begin SonarQube Cloud Analysis
         run: |
@@ -76,13 +76,13 @@ jobs:
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build TicketFlow.slnx --no-restore --configuration Release
 
       - name: Run Unit Tests
-        run: dotnet test --no-build --configuration Release --filter "Category=Unit" ${{ env.COVERAGE_ARGS }}
+        run: dotnet test TicketFlow.slnx --no-build --configuration Release --filter "Category=Unit" ${{ env.COVERAGE_ARGS }}
 
       - name: Run Integration Tests
-        run: dotnet test --no-build --configuration Release --filter "Category=Integration" ${{ env.COVERAGE_ARGS }}
+        run: dotnet test TicketFlow.slnx --no-build --configuration Release --filter "Category=Integration" ${{ env.COVERAGE_ARGS }}
 
       - name: End SonarQube Cloud Analysis
         run: ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
