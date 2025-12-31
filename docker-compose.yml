@@ -1,0 +1,6 @@
+services:
+  ticketflow.api:
+    image: ${DOCKER_REGISTRY-}ticketflowapi
+    build:
+      context: .
+      dockerfile: src/TicketFlow.API/Dockerfile

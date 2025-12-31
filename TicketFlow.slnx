@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TicketFlow.API/TicketFlow.API.csproj" Id="ec998bad-1a0d-4fa3-8d92-500d1e99ec05" />
+    <Project Path="src/TicketFlow.Application/TicketFlow.Application.csproj" Id="68cc7f76-85b3-49ec-9a56-826b0df8d15e" />
+    <Project Path="src/TicketFlow.Domain/TicketFlow.Domain.csproj" Id="9d321a73-b4bb-43e2-b75a-334f13e306b4" />
+    <Project Path="src/TicketFlow.Infrastructure/TicketFlow.Infrastructure.csproj" Id="6dd5687e-826b-4208-a2c7-87fcb7713314" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TicketFlow.IntegrationTests/TicketFlow.IntegrationTests.csproj" Id="f505ce84-03f5-45e8-b495-22164cf5090f" />
+    <Project Path="tests/TicketFlow.UnitTests/TicketFlow.UnitTests.csproj" Id="4487bb1f-1a97-417d-a2ac-744115cf5814" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+</Solution>
