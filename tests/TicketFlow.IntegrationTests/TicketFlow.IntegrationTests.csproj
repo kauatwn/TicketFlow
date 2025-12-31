@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\TicketFlow.API\TicketFlow.API.csproj" />
+    <ProjectReference Include="..\..\src\TicketFlow.Infrastructure\TicketFlow.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
