@@ -81,6 +81,9 @@ jobs:
       - name: Run Unit Tests
         run: dotnet test --no-build --configuration Release --filter "Category=Unit" ${{ env.COVERAGE_ARGS }}
 
+      - name: Run Integration Tests
+        run: dotnet test --no-build --configuration Release --filter "Category=Integration" ${{ env.COVERAGE_ARGS }}
+
       - name: End SonarQube Cloud Analysis
         run: ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
