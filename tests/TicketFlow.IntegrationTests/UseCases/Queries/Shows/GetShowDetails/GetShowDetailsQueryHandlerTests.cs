@@ -24,7 +24,7 @@ public class GetShowDetailsQueryHandlerTests(IntegrationTestWebAppFactory factor
         using (IServiceScope scope = _scopeFactory.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<TicketFlowDbContext>();
-
+            
             Show show = new(title: "Coldplay - World Tour", date: now.AddMonths(3), maxTicketsPerUser: 5, currentDate: now);
 
             Ticket ticket1 = new(show.Id, new Seat(Sector: "VIP", Row: "A", Number: "1"), price: 500m, createdDate: now);

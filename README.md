@@ -39,7 +39,7 @@ This command builds the API, starts the SQL Server, and **automatically applies 
 docker compose up -d
 ```
 
-*The API documentation will be accessible at `http://localhost:8080/swagger`.*
+*The API documentation will be accessible at `https://localhost:8081/swagger`.*
 
 ### 4. Execute Tests
 
@@ -103,14 +103,59 @@ To prevent "double booking" without killing performance, we made specific engine
 
 The project adopts a strategy focused on **Time** and **Parallelism**.
 
-- **Unit Tests (Time Travel):** We use `FakeTimeProvider` to simulate shows in the past or future without dirty hacks like `Thread.Sleep`.
+- **Unit Tests (Time Travel):** We use time injection through method parameters to simulate shows in the past or future without dirty hacks like `Thread.Sleep`.
 - **Integration Tests:** We spawn separate Service Scopes to simulate concurrent users (`Task.WhenAll`) hitting the real database to prove the locking mechanism works.
 
 > [!NOTE]
 > **Testing Isolation Strategy**
 > Unlike standard CRUD tests, our integration tests **intentionally** share resources (the same Ticket ID) to provoke Race Conditions and validate that the system rejects the second attempt.
 
-### 5. Known Limitations (Trade-offs)
+### 5. Manual Verification (Sandbox Walkthrough)
+
+Since this project focuses on **Concurrency** rather than CRUD, follow this specific flow to manually validate the **Optimistic Locking** mechanism via Swagger:
+
+#### Step 1: Discover Available Tickets
+
+The application automatically seeds the database with a Show (ID: `11111111-1111-1111-1111-111111111111`) and 50 Tickets.
+
+1. Call the endpoint using the **Fixed Show ID**:
+    - **GET** `/api/shows/11111111-1111-1111-1111-111111111111/tickets`
+    - *Copy the `id` of the first ticket in the list.*
+
+#### Step 2: Reserve the Ticket (Success Scenario)
+
+Send a reservation request for the copied Ticket ID.
+
+- **POST** `/api/tickets/{ticketId}/reserve`
+- **Body:**
+
+    ```json
+    {
+      "customerId": "aaaa1111-bb22-cc33-dd44-eeee55556666"
+    }
+    ```
+
+- **Result:** `204 No Content` (The ticket is now reserved).
+
+#### Step 3: Trigger Race Condition (Conflict Scenario)
+
+Immediately try to send the **exact same request** again (simulating a second user trying to buy the same seat).
+
+- **Result:** `409 Conflict`
+- **Response Body:**
+
+    ```json
+    {
+      "type": "https://tools.ietf.org/html/rfc7231#section-6.5.8",
+      "title": "Resource Conflict",
+      "status": 409,
+      "detail": "Seat 'VIP - A1' is already reserved or sold."
+    }
+    ```
+
+> This proves that the **Domain Layer** successfully intercepted the invalid state transition or the **Infrastructure Layer** caught the `DbUpdateConcurrencyException`.
+
+### 6. Known Limitations (Trade-offs)
 
 > [!WARNING]
 > **Trade-off: Max Tickets Per User**
@@ -118,7 +163,7 @@ The project adopts a strategy focused on **Time** and **Parallelism**.
 >
 > **Production Considerations:** In a full-scale production environment, this specific edge case would be mitigated by implementing **eventual consistency checks** (Background Worker) or a **dedicated counter table** with strict Database Constraints. For this sandbox, we prioritize the clarity of the core Locking mechanism.
 
-### 6. CI/CD & Quality
+### 7. CI/CD & Quality
 
 The project includes configuration for automated quality checks:
 
