@@ -24,7 +24,7 @@ public class GetShowDetailsQueryHandlerTests(IntegrationTestWebAppFactory factor
         using (IServiceScope scope = _scopeFactory.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<TicketFlowDbContext>();
-            
+
             Show show = new(title: "Coldplay - World Tour", date: now.AddMonths(3), maxTicketsPerUser: 5, currentDate: now);
 
             Ticket ticket1 = new(show.Id, new Seat(Sector: "VIP", Row: "A", Number: "1"), price: 500m, createdDate: now);
@@ -38,18 +38,16 @@ public class GetShowDetailsQueryHandlerTests(IntegrationTestWebAppFactory factor
             showId = show.Id;
         }
 
-        // Act
-        ShowDetailsResponse? result;
+        // Act & Assert
         using (IServiceScope scope = _scopeFactory.CreateScope())
         {
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            result = await mediator.Send(new GetShowDetailsQuery(showId));
-        }
+            ShowDetailsResponse? result = await mediator.Send(new GetShowDetailsQuery(showId));
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Coldplay - World Tour", result.Title);
-        Assert.Equal(2, result.TotalTickets);
-        Assert.Equal(1, result.AvailableTickets);
+            Assert.NotNull(result);
+            Assert.Equal("Coldplay - World Tour", result.Title);
+            Assert.Equal(2, result.TotalTickets);
+            Assert.Equal(1, result.AvailableTickets);
+        }
     }
 }
