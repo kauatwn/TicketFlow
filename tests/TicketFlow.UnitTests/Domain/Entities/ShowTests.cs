@@ -159,4 +159,53 @@ public class ShowTests
         // Assert
         Assert.Equal(ShowStatus.Cancelled, show.Status);
     }
+
+    [Fact(DisplayName = "Cancel should throw DomainConflictException when show is Finished")]
+    public void Cancel_ShouldThrowException_WhenShowIsFinished()
+    {
+        // Arrange
+        Show show = new(title: "Finished Show", date: _now.AddDays(1), maxTicketsPerUser: 10, currentDate: _now);
+
+        show.Finish(_now.AddDays(2));
+
+        // Act
+        void Act() => show.Cancel();
+
+        // Assert
+        var exception = Assert.Throws<DomainConflictException>(Act);
+        Assert.Equal(Show.CannotCancelFinishedShow, exception.Message);
+    }
+
+    [Fact(DisplayName = "Finish should update status to Finished when date is valid")]
+    public void Finish_ShouldUpdateStatusToFinished_WhenDateIsValid()
+    {
+        // Arrange
+        DateTime showDate = _now.AddDays(10);
+        Show show = new(title: "Future Show", date: showDate, maxTicketsPerUser: 5, currentDate: _now);
+
+        DateTime validFinishDate = showDate.AddDays(1);
+
+        // Act
+        show.Finish(validFinishDate);
+
+        // Assert
+        Assert.Equal(ShowStatus.Finished, show.Status);
+    }
+
+    [Fact(DisplayName = "Finish should throw DomainException when currentDate is before Show Date")]
+    public void Finish_ShouldThrowDomainException_WhenDateIsBeforeShowDate()
+    {
+        // Arrange
+        DateTime showDate = _now.AddDays(10);
+        Show show = new(title: "Future Show", date: showDate, maxTicketsPerUser: 5, currentDate: _now);
+
+        DateTime invalidFinishDate = showDate.AddDays(-1);
+
+        // Act
+        void Act() => show.Finish(invalidFinishDate);
+
+        // Assert
+        var exception = Assert.Throws<DomainException>(Act);
+        Assert.Equal(Show.CannotFinishBeforeDate, exception.Message);
+    }
 }
