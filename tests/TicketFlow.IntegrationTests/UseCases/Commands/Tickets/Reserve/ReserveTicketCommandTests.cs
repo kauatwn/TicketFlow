@@ -19,7 +19,7 @@ public class ReserveTicketCommandTests(IntegrationTestWebAppFactory factory)
     [Fact(DisplayName = "Should reserve ticket successfully when request is valid")]
     public async Task Handle_ShouldReserveTicket_WhenRequestIsValid()
     {
-        // Arrage
+        // Arrange
         Guid ticketId;
         Guid customerId = Guid.NewGuid();
 
@@ -68,13 +68,15 @@ public class ReserveTicketCommandTests(IntegrationTestWebAppFactory factory)
         Guid nonExistentTicketId = Guid.NewGuid();
         Guid customerId = Guid.NewGuid();
 
-        // Act
         using IServiceScope scope = _scopeFactory.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-        var command = new ReserveTicketCommand(nonExistentTicketId, customerId);
+        ReserveTicketCommand command = new(nonExistentTicketId, customerId);
+
+        // Act
+        Task Act() => mediator.Send(command);
 
         // Assert
-        await Assert.ThrowsAsync<NotFoundException>(() => mediator.Send(command));
+        await Assert.ThrowsAsync<NotFoundException>(Act);
     }
 
     [Fact(DisplayName = "Should throw DomainConflictException when ticket is already reserved")]
@@ -103,14 +105,87 @@ public class ReserveTicketCommandTests(IntegrationTestWebAppFactory factory)
             ticketId = ticket.Id;
         }
 
-        using IServiceScope actScope = _scopeFactory.CreateScope();
-        var mediator = actScope.ServiceProvider.GetRequiredService<IMediator>();
-        var command = new ReserveTicketCommand(ticketId, userB);
+        // Act & Assert
+        using (IServiceScope scope = _scopeFactory.CreateScope())
+        {
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            ReserveTicketCommand command = new(ticketId, userB);
 
-        // Act
-        async Task Act() => await mediator.Send(command);
+            Task Act() => mediator.Send(command);
 
-        // Assert
-        await Assert.ThrowsAsync<DomainConflictException>(Act);
+            await Assert.ThrowsAsync<DomainConflictException>(Act);
+        }
+    }
+
+    [Fact(DisplayName = "Should throw DomainConflictException when show cannot sell tickets")]
+    public async Task Handle_ShouldThrowDomainConflictException_WhenShowCannotSellTickets()
+    {
+        // Arrange
+        Guid ticketId;
+        Guid customerId = Guid.NewGuid();
+        DateTime now = DateTime.UtcNow;
+
+        using (IServiceScope scope = _scopeFactory.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<TicketFlowDbContext>();
+
+            Show show = new(title: "Past Concert", date: now.AddDays(-30), maxTicketsPerUser: 2, currentDate: now.AddDays(-60));
+            Ticket ticket = new(show.Id, new Seat(Sector: "VIP", Row: "A", Number: "1"), price: 500m, createdDate: now.AddDays(-60));
+
+            context.Shows.Add(show);
+            context.Tickets.Add(ticket);
+            await context.SaveChangesAsync();
+
+            ticketId = ticket.Id;
+        }
+
+        // Act & Assert
+        using (IServiceScope scope = _scopeFactory.CreateScope())
+        {
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            ReserveTicketCommand command = new(ticketId, customerId);
+
+            Task Act() => mediator.Send(command);
+
+            var exception = await Assert.ThrowsAsync<DomainConflictException>(Act);
+            Assert.Equal("Cannot reserve ticket. The show is unavailable or finished.", exception.Message);
+        }
+    }
+
+    [Fact(DisplayName = "Should throw DomainConflictException when show is cancelled")]
+    public async Task Handle_ShouldThrowDomainConflictException_WhenShowIsCancelled()
+    {
+        // Arrange
+        Guid ticketId;
+        Guid customerId = Guid.NewGuid();
+        DateTime now = DateTime.UtcNow;
+
+        using (IServiceScope scope = _scopeFactory.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<TicketFlowDbContext>();
+
+            Show show = new(title: "Cancelled Show", date: now.AddDays(30), maxTicketsPerUser: 2, currentDate: now);
+            show.Cancel();
+
+            Ticket ticket = new(show.Id, new Seat(Sector: "VIP", Row: "A", Number: "1"), price: 500m, createdDate: now);
+
+            context.Shows.Add(show);
+            context.Tickets.Add(ticket);
+            await context.SaveChangesAsync();
+
+            ticketId = ticket.Id;
+        }
+
+        // Act & Assert
+        using (IServiceScope scope = _scopeFactory.CreateScope())
+        {
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            ReserveTicketCommand command = new(ticketId, customerId);
+
+            Task Act() => mediator.Send(command);
+
+            var exception = await Assert.ThrowsAsync<DomainConflictException>(Act);
+            Assert.Equal("Cannot reserve ticket. The show is unavailable or finished.", exception.Message);
+        }
     }
 }
