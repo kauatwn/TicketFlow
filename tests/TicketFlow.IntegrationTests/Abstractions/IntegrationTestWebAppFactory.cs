@@ -32,6 +32,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             services.AddDbContext<TicketFlowDbContext>(options =>
             {
                 options.UseSqlServer(_dbContainer.GetConnectionString());
+                options.EnableSensitiveDataLogging(false);
             });
         });
     }
@@ -42,6 +43,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
         using IServiceScope scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TicketFlowDbContext>();
+
         await context.Database.MigrateAsync();
     }
 

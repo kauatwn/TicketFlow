@@ -1,8 +1,10 @@
-﻿using TicketFlow.Domain.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+using TicketFlow.Domain.Entities;
 using TicketFlow.Domain.ValueObjects;
 
 namespace TicketFlow.Infrastructure.Persistence.Seed;
 
+[ExcludeFromCodeCoverage(Justification = "Data seeding configuration for testing purposes")]
 public static class TicketFlowSeeder
 {
     public static readonly Guid FixedShowId = Guid.Parse("11111111-1111-1111-1111-111111111111");
