@@ -10,6 +10,8 @@ public sealed class Show : IAggregateRoot
     public const string DateIsRequired = "Show date is required.";
     public const string DateMustBeFuture = "Show date must be in the future.";
     public const string MaxTicketsMustBePositive = "Max tickets per user must be greater than zero.";
+    public const string CannotCancelFinishedShow = "Cannot cancel a show that has already finished.";
+    public const string CannotFinishBeforeDate = "Cannot finish a show before its date.";
 
     public Guid Id { get; private set; }
     public string Title { get; private set; }
@@ -42,10 +44,20 @@ public sealed class Show : IAggregateRoot
     {
         if (Status == ShowStatus.Finished)
         {
-            throw new DomainConflictException("Cannot cancel a show that has already finished.");
+            throw new DomainConflictException(CannotCancelFinishedShow);
         }
 
         Status = ShowStatus.Cancelled;
+    }
+
+    public void Finish(DateTime currentDate)
+    {
+        if (currentDate < Date)
+        {
+            throw new DomainException(CannotFinishBeforeDate);
+        }
+
+        Status = ShowStatus.Finished;
     }
 
     private static void ValidateDomain(string title, DateTime date, int maxTicketsPerUser, DateTime currentDate)
